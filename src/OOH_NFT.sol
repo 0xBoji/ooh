@@ -28,6 +28,10 @@ contract OOH_NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
     mapping(address => string[]) private _OOH_owners;
     // _OOH_owners[owner_OOH_address] = [_OOH_calendar, ...];
 
+    // == Events ==
+    event OOHBooked(address indexed booker, address indexed ooh_owner, uint256 contractId, string context, uint256 amount, uint256 tokenId);
+    event OOHCancelled(address indexed booker, uint256 contractId, string context, uint256 tokenId);
+
     constructor() ERC721("OOH_NFT", "OOH_NFT") Ownable(msg.sender) {
         _tokenId = 0;
     }
@@ -62,7 +66,7 @@ contract OOH_NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
 
         emit OOHBooked(booker, ooh_owner, _contract_Id, context, amount, tokenId);
     }
-    
+
     function cancel_OOH_NFT(address booker, uint256 _contractId, string memory context, uint256 tokenId) public {
         require(ownerOf(tokenId) != address(0), "Token does not exist");
         
