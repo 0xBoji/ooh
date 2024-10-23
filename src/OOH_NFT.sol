@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title OOH_NFT
@@ -27,12 +28,8 @@ contract OOH_NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
     mapping(address => string[]) private _OOH_owners;
     // _OOH_owners[owner_OOH_address] = [_OOH_calendar, ...];
 
-    event OOHBooked(address indexed booker, address indexed ooh_owner, uint256 contractId, string context, uint256 amount, uint256 tokenId);
-    event OOHCancelled(address indexed booker, uint256 contractId, string context, uint256 tokenId);
-
     constructor() ERC721("OOH_NFT", "OOH_NFT") Ownable(msg.sender) {
         _tokenId = 0;
-        _contract_Id = 0;
     }
 
     /**
@@ -53,10 +50,8 @@ contract OOH_NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
         string memory context,
         uint256 amount,
         uint256 tokenId
-    )
-        public
-    {
-        require(_exists(tokenId), "Token does not exist");
+    ) public {
+        require(ownerOf(tokenId) != address(0), "Token does not exist");
         require(ownerOf(tokenId) == ooh_owner, "Not the owner of the token");
         
         _contract_Id++;
@@ -67,9 +62,9 @@ contract OOH_NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
 
         emit OOHBooked(booker, ooh_owner, _contract_Id, context, amount, tokenId);
     }
-
+    
     function cancel_OOH_NFT(address booker, uint256 _contractId, string memory context, uint256 tokenId) public {
-        require(_exists(tokenId), "Token does not exist");
+        require(ownerOf(tokenId) != address(0), "Token does not exist");
         
         bool found = false;
         for (uint i = 0; i < _contract_OOH_owner[booker].length; i++) {
@@ -82,6 +77,7 @@ contract OOH_NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
         }
         require(found, "Booking not found for this booker");
 
+        // Remove the context from the calendar and owner's list
         for (uint i = 0; i < _OOH_calendar.length; i++) {
             if (keccak256(bytes(_OOH_calendar[i])) == keccak256(bytes(context))) {
                 _OOH_calendar[i] = _OOH_calendar[_OOH_calendar.length - 1];
@@ -104,31 +100,22 @@ contract OOH_NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
         emit OOHCancelled(booker, _contractId, context, tokenId);
     }
 
-    function get_OOH_Calendar(address ooh_owner, uint256 tokenId) public view returns (string[] memory) {
-        require(_exists(tokenId), "Token does not exist");
-        require(ownerOf(tokenId) == ooh_owner, "Not the owner of the token");
-        
-        return _OOH_owners[ooh_owner];
-    }
-
     function get_OOH_Contract(
         address ooh_owner,
         uint256 _contract_Id,
         uint256 tokenId
     )
         public
-        view
         returns (string memory)
     {
-        require(_exists(tokenId), "Token does not exist");
+        // TODO: Implement cancellation logic
+    }
+
+    function get_OOH_Calendar(address ooh_owner, uint256 tokenId) public view returns (string[] memory) {
+        require(ownerOf(tokenId) != address(0), "Token does not exist");
         require(ownerOf(tokenId) == ooh_owner, "Not the owner of the token");
-        
-        for (uint i = 0; i < _OOH_calendar.length; i++) {
-            if (keccak256(bytes(_OOH_calendar[i])) == keccak256(bytes(_OOH_owners[ooh_owner][i]))) {
-                return _OOH_calendar[i];
-            }
-        }
-        revert("Contract not found");
+
+        return _OOH_owners[ooh_owner];
     }
 
     /**
@@ -171,7 +158,7 @@ contract OOH_NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
     }
 
     /**
-     * @dev Burns a specific OOH NFT owned by the given address.
+     * @dev Cleans up the caller's OOH NFTs based on the number of OOH NFTs they own.
      */
     function burn_OOH_NFT(address owner, uint256 tokenId) public onlyOwner {
         uint256[] memory tokenIds = _tokenIdOwned[owner];
