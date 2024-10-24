@@ -72,45 +72,45 @@ contract OOH_NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
     }
 
     function cancel_OOH_NFT(address booker, uint256 _contractId, string memory context, uint256 tokenId) public {
-    require(ownerOf(tokenId) != address(0), "Token does not exist");
+        require(ownerOf(tokenId) != address(0), "Token does not exist");
 
-    bool found = false;
-    for (uint256 i = 0; i < _contract_OOH_owner[booker].length; i++) {
-        if (_contract_OOH_owner[booker][i] == _contractId) {
-            found = true;
-            _contract_OOH_owner[booker][i] = _contract_OOH_owner[booker][_contract_OOH_owner[booker].length - 1];
-            _contract_OOH_owner[booker].pop();
-            break;
+        bool found = false;
+        for (uint256 i = 0; i < _contract_OOH_owner[booker].length; i++) {
+            if (_contract_OOH_owner[booker][i] == _contractId) {
+                found = true;
+                _contract_OOH_owner[booker][i] = _contract_OOH_owner[booker][_contract_OOH_owner[booker].length - 1];
+                _contract_OOH_owner[booker].pop();
+                break;
+            }
         }
-    }
-    require(found, "Booking not found for this booker");
+        require(found, "Booking not found for this booker");
 
-    // Remove the context from the calendar and owner's list
-    for (uint256 i = 0; i < _OOH_calendar.length; i++) {
-        if (keccak256(bytes(_OOH_calendar[i])) == keccak256(bytes(context))) {
-            _OOH_calendar[i] = _OOH_calendar[_OOH_calendar.length - 1];
-            _OOH_calendar.pop();
-            break;
+        // Remove the context from the calendar and owner's list
+        for (uint256 i = 0; i < _OOH_calendar.length; i++) {
+            if (keccak256(bytes(_OOH_calendar[i])) == keccak256(bytes(context))) {
+                _OOH_calendar[i] = _OOH_calendar[_OOH_calendar.length - 1];
+                _OOH_calendar.pop();
+                break;
+            }
         }
-    }
 
-    address ooh_owner = ownerOf(tokenId);
-    for (uint256 i = 0; i < _OOH_owners[ooh_owner].length; i++) {
-        if (keccak256(bytes(_OOH_owners[ooh_owner][i])) == keccak256(bytes(context))) {
-            _OOH_owners[ooh_owner][i] = _OOH_owners[ooh_owner][_OOH_owners[ooh_owner].length - 1];
-            _OOH_owners[ooh_owner].pop();
-            break;
+        address ooh_owner = ownerOf(tokenId);
+        for (uint256 i = 0; i < _OOH_owners[ooh_owner].length; i++) {
+            if (keccak256(bytes(_OOH_owners[ooh_owner][i])) == keccak256(bytes(context))) {
+                _OOH_owners[ooh_owner][i] = _OOH_owners[ooh_owner][_OOH_owners[ooh_owner].length - 1];
+                _OOH_owners[ooh_owner].pop();
+                break;
+            }
         }
+
+        delete _contract_OOH_amount[_contractId];
+
+        emit OOHCancelled(booker, _contractId, context, tokenId);
     }
 
-    delete _contract_OOH_amount[_contractId];
-
-    emit OOHCancelled(booker, _contractId, context, tokenId);
-}
-
-        function get_OOH_Contract(
-        address ooh_owner,
-        uint256 _contract_Id,
+    function get_OOH_Contract(
+        address booker,
+        uint256 contractId,
         uint256 tokenId
     )
         public
@@ -118,10 +118,9 @@ contract OOH_NFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
         returns (string memory)
     {
         require(ownerOf(tokenId) != address(0), "Token does not exist");
-        require(ownerOf(tokenId) == ooh_owner, "Not the owner of the token");
         
-        for (uint256 i = 0; i < _contract_OOH_owner[ooh_owner].length; i++) {
-            if (_contract_OOH_owner[ooh_owner][i] == _contract_Id) {
+        for (uint256 i = 0; i < _contract_OOH_owner[booker].length; i++) {
+            if (_contract_OOH_owner[booker][i] == contractId) {
                 return _OOH_calendar[i];
             }
         }
